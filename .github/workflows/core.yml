@@ -57,14 +57,18 @@ jobs:
         with:
           working-directory: core
 
+      # These call the Composer scripts rather than the binaries directly, so that
+      # CI and a developer's machine run the identical command. `stan` in
+      # particular carries a prerequisite — see composer.json — and invoking
+      # phpstan straight would silently skip it.
       - name: Coding standards
-        run: vendor/bin/php-cs-fixer fix --dry-run --diff
+        run: composer cs
 
       - name: Static analysis
-        run: vendor/bin/phpstan analyse
+        run: composer stan
 
       - name: Tests
-        run: php bin/phpunit
+        run: composer test
 
       # The check that replaces the compiler this polyglot repo does not have:
       # if the API contract moved, the committed spec has to move with it.
