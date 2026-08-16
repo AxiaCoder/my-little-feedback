@@ -95,6 +95,16 @@ Not in this milestone: widget, MCP, Go service, public roadmap, authentication.
 
 ---
 
+## Session pre-check
+
+`.claude/settings.json` registers a **SessionStart hook** that runs `.claude/hooks/check-container-engine.sh`. It verifies that a container engine is installed **and responding**, and says so loudly if it is not.
+
+This is a hook rather than a line of documentation on purpose: an instruction in a file can be skipped, a hook cannot. Every useful command here goes through Compose — the database, the migrations, the OpenAPI dump — so a session started against a dead engine wastes several commands before the cause becomes obvious.
+
+**If the pre-check fails, stop and fix that first.** Do not propose `docker` or `compose` commands until the engine responds; they cannot succeed. To review or disable the hook: `/hooks`.
+
+---
+
 ## How to run locally
 
 ```bash
