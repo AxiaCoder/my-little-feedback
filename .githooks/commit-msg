@@ -1,0 +1,64 @@
+#!/bin/sh
+# Checks the commit subject against Conventional Commits.
+#
+# The repository is public from its first commit, so its history is part of what
+# it shows. A log that reads as a list of intentions costs one regular expression
+# to keep; a log of "wip", "fix" and "update" cannot be repaired afterwards
+# without rewriting published history.
+
+message_file=$1
+subject=$(sed -n '1p' "$message_file")
+
+# Git's own generated subjects. Rejecting these would break `git merge` and
+# `git revert` for no benefit — they are not authored prose.
+case "$subject" in
+    'Merge '*|'Revert '*|'fixup!'*|'squash!'*) exit 0 ;;
+esac
+
+# Comment lines only: the message was left empty and git will abort anyway.
+[ -z "$subject" ] && exit 0
+
+types='build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test'
+subject_limit=72
+
+fail() {
+    cat >&2 <<EOF
+
+  $1
+
+  Subject read:
+      $subject
+
+  Expected:  <type>(<optional scope>): <subject>
+  Types:     build chore ci docs feat fix perf refactor revert style test
+  A '!' after the type or scope marks a breaking change.
+
+  Examples:
+      feat: add the feedback creation endpoint
+      fix(core): reject an unknown product slug with a 422
+      docs: record why feedback types live in the database
+
+EOF
+    exit 1
+}
+
+if ! printf '%s' "$subject" | grep -Eq "^($types)(\([a-z0-9._-]+\))?!?: .+"; then
+    fail "Commit subject does not follow Conventional Commits."
+fi
+
+if [ "${#subject}" -gt "$subject_limit" ]; then
+    fail "Commit subject is ${#subject} characters, the limit is $subject_limit. Move the detail into the body."
+fi
+
+case "$subject" in
+    *.) fail "Commit subject ends with a period." ;;
+esac
+
+# A body has to be separated from the subject by an empty line, otherwise git
+# treats the whole thing as one paragraph and every tool truncates it oddly.
+second_line=$(sed -n '2p' "$message_file")
+if [ -n "$second_line" ]; then
+    fail "Line 2 must be empty when the message has a body."
+fi
+
+exit 0

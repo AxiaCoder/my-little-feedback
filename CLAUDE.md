@@ -62,7 +62,9 @@ Full reasoning, including the alternatives that were rejected: `docs/architectur
 ## Dev conventions
 
 - All content in English (see Ground rules).
-- Conventional commit prefixes (`feat:`, `fix:`, `docs:`, `chore:`).
+- **Nothing is committed on `main`.** Branch, open a pull request, let CI run, merge. A `pre-commit` hook refuses commits on `main`, and the pull request template asks for what the diff cannot say.
+- **Conventional Commits, enforced.** `<type>(<optional scope>): <subject>`, subject in the imperative and under 72 characters, no trailing period, blank line before the body. Types: `build` `chore` `ci` `docs` `feat` `fix` `perf` `refactor` `revert` `style` `test`. A `commit-msg` hook checks every commit and a workflow checks every pull request title.
+- **The hooks live in `.githooks/` and git does not install them on clone.** A SessionStart hook points `core.hooksPath` at them automatically; outside a Claude session, run `git config core.hooksPath .githooks` once. Until that is set the directory is inert and nothing stops a commit on `main`.
 - No personal data, no private hostnames, no ticket keys, no real e-mail addresses anywhere in the repository — it is public.
 - The public product identifier (`data-product="..."`) **is not a secret**. Never treat it as authentication; protection is server-side only.
 - Doctrine migrations are committed, never edited after being applied.
@@ -89,6 +91,47 @@ Not in this milestone: widget, MCP, Go service, public roadmap, authentication.
 
 ---
 
+## Where we stopped — 2026-08-16, end of session
+
+**The baseline is real now.** Everything below was executed, not read: the stack was torn
+down with `docker compose down -v` and rebuilt from scratch, and the CI ran twice on GitHub.
+
+| | |
+|---|---|
+| Repository | `github.com/AxiaCoder/my-little-feedback`, public, remote `origin` over SSH |
+| `main` | green — `e5095b4`, PR #1 merged |
+| Verified locally | stack up, migrations, PHPUnit, PHPStan, PHP-CS-Fixer, `composer openapi`, `/api/doc` and `/api/doc.json` |
+| Verified on CI | all four steps, **including the OpenAPI contract check**, on both the `push` and `pull_request` triggers |
+
+**Still true, still nothing written:** no entity, no controller, no migration, no template.
+The application does nothing yet — what exists is a scaffold that has been proven to run.
+
+### Next session, in this order
+
+1. **Test database plumbing.** `mlf_test` does not exist and nothing creates it. The single
+   test only boots the kernel, so this is invisible today and blocking at the first
+   functional test. Spec §2.7 requires the suite to run the **migrations** rather than
+   `doctrine:schema:create`, so that the seeded feedback types exist and the migrations get
+   exercised on every run. Roughly thirty lines, no unknowns.
+2. **Entities** — `Product`, `FeedbackType`, `Feedback`, the `SubmitterContext` embeddable,
+   the `FeedbackStatus` enum, repositories.
+3. **The migration**, seeding the three default feedback types in the same file that creates
+   their table.
+4. `POST /api/feedback`, then `GET /api/feedback` — one pull request each.
+5. Twig back-office listing, then regenerate and commit `contracts/openapi.yaml`.
+
+Steps 2 and 3 travel together in one pull request. Read
+`docs/specs/01-core-data-model.md` before starting any of them — it is accepted, not a draft.
+
+### Open, decided against for now
+
+**Branch protection on `main` is not enabled.** The local hook catches the honest mistake but
+is bypassed by `--no-verify` and absent from a fresh clone. Only a GitHub ruleset actually
+prevents a direct push. Worth enabling; not done because it changes repository settings and
+that call is the owner's.
+
+---
+
 ## Known issues / decisions pending
 
 - **Two authentication populations** — administrators and end users who vote on the roadmap. The model is not designed yet. It becomes blocking at milestone 5, not before.
@@ -103,7 +146,10 @@ Not in this milestone: widget, MCP, Go service, public roadmap, authentication.
 
 ## Session pre-check
 
-`.claude/settings.json` registers a **SessionStart hook** that runs `.claude/hooks/check-container-engine.sh`. It verifies that a container engine is installed **and responding**, and says so loudly if it is not.
+`.claude/settings.json` registers two **SessionStart hooks**:
+
+- `check-container-engine.sh` — verifies that a container engine is installed **and responding**, and says so loudly if it is not.
+- `check-git-hooks.sh` — points `core.hooksPath` at `.githooks/`, because git leaves versioned hooks inert until someone does. It configures rather than reports: a hook nobody installed protects nothing.
 
 This is a hook rather than a line of documentation on purpose: an instruction in a file can be skipped, a hook cannot. Every useful command here goes through Compose — the database, the migrations, the OpenAPI dump — so a session started against a dead engine wastes several commands before the cause becomes obvious.
 

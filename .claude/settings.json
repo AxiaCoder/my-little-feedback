@@ -8,6 +8,12 @@
             "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-container-engine.sh\"",
             "timeout": 15,
             "statusMessage": "Checking the container engine..."
+          },
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PROJECT_DIR/.claude/hooks/check-git-hooks.sh\"",
+            "timeout": 15,
+            "statusMessage": "Checking the git hooks..."
           }
         ]
       }

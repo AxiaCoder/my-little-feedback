@@ -1,0 +1,37 @@
+name: pr-title
+
+# Not path-filtered, unlike the component workflows: this one is about the pull
+# request itself, not about what it touches.
+on:
+  pull_request:
+    types: [opened, edited, reopened]
+
+permissions:
+  contents: read
+
+jobs:
+  conventional:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Title follows Conventional Commits
+        # Through the environment, never interpolated into the script: a pull
+        # request title is attacker-controlled text in a public repository.
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          types='build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test'
+
+          if ! printf '%s' "$TITLE" | grep -Eq "^($types)(\([a-z0-9._-]+\))?!?: .+"; then
+            echo "::error::Pull request title does not follow Conventional Commits: '$TITLE'"
+            echo "Expected <type>(<optional scope>): <subject>"
+            echo "Types: build chore ci docs feat fix perf refactor revert style test"
+            exit 1
+          fi
+
+          if [ "${#TITLE}" -gt 72 ]; then
+            echo "::error::Pull request title is ${#TITLE} characters, the limit is 72."
+            exit 1
+          fi
+
+          echo "Title accepted: $TITLE"

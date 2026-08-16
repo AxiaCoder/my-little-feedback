@@ -1,0 +1,36 @@
+#!/bin/sh
+# Refuses commits made directly on a protected branch.
+#
+# Not a substitute for branch protection on GitHub — a local hook is trivially
+# bypassed with `--no-verify` and does not exist at all in a fresh clone until
+# core.hooksPath is set. It catches the honest mistake, which is the common one:
+# forgetting to branch and committing straight onto main.
+
+protected='main'
+
+# Fails during rebase, cherry-pick and any other detached HEAD state. Those are
+# not the mistake this hook is looking for, so stay out of the way.
+branch=$(git symbolic-ref --short -q HEAD) || exit 0
+
+for name in $protected; do
+    if [ "$branch" = "$name" ]; then
+        cat >&2 <<EOF
+
+  Refusing to commit directly on '$name'.
+
+  Every change goes through a pull request — it is what makes the history
+  readable in a public repository, and what gives CI a chance to run before
+  main moves.
+
+  Move what you have onto a branch:
+
+      git checkout -b <type>/<short-description>
+
+  Nothing is lost: staged and unstaged changes follow you across the checkout.
+
+EOF
+        exit 1
+    fi
+done
+
+exit 0
