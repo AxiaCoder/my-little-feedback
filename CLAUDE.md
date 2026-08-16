@@ -93,6 +93,14 @@ Not in this milestone: widget, MCP, Go service, public roadmap, authentication.
 
 ## Where we stopped — 2026-08-16, end of session
 
+> ⚠️ **This section is temporary and does not belong in this file.** `CLAUDE.md` states how to
+> work on the project; it is not a logbook, and on a public repository a running commentary on
+> where a session stopped is noise for every reader who is not us.
+>
+> **First action of the next session: turn everything below into GitHub issues**, then delete
+> this section. Tracked work belongs in the issue tracker, where it can be assigned, closed and
+> referenced from a pull request — none of which a Markdown bullet can do.
+
 **The baseline is real now.** Everything below was executed, not read: the stack was torn
 down with `docker compose down -v` and rebuilt from scratch, and the CI ran twice on GitHub.
 
@@ -108,6 +116,8 @@ The application does nothing yet — what exists is a scaffold that has been pro
 
 ### Next session, in this order
 
+0. **Open a GitHub issue per item below, then delete this whole section.** The list stops living
+   in the repository the moment it can live in the tracker.
 1. **Test database plumbing.** `mlf_test` does not exist and nothing creates it. The single
    test only boots the kernel, so this is invisible today and blocking at the first
    functional test. Spec §2.7 requires the suite to run the **migrations** rather than
