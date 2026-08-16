@@ -95,14 +95,15 @@ Only PHP and Composer matter today: `ingest`, `mcp` and `widget` are not impleme
 ## Running locally
 
 ```bash
-cp core/.env core/.env.local     # then set DATABASE_URL if needed
 docker compose up -d
 docker compose exec core php bin/console doctrine:migrations:migrate
 ```
 
 The API is then on http://localhost:8130, and the generated OpenAPI documentation on http://localhost:8130/api/doc.
 
-Without Docker, you need a PostgreSQL 16 instance of your own and `php -S localhost:8130 -t core/public`.
+No `.env.local` is needed for this: Compose passes `DATABASE_URL` as a real environment variable, and Symfony gives those precedence over any `.env*` file. Create one only to override something for yourself — it is git-ignored.
+
+**Running `core` outside a container** is also supported: Postgres is published on `localhost:5440`, which is what `core/.env` already points at, so `php -S localhost:8130 -t core/public` works against the Compose database with no extra configuration.
 
 ---
 
