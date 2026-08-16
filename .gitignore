@@ -1,0 +1,21 @@
+# Component-level ignores live with their component — core/.gitignore is managed
+# by Symfony recipes and already covers vendor/, var/ and .env.local.
+# Only put here what is genuinely repository-wide.
+
+###> editors ###
+.idea/
+.vscode/
+*.swp
+.DS_Store
+###< editors ###
+
+###> components not implemented yet ###
+ingest/bin/
+
+mcp/.venv/
+mcp/**/__pycache__/
+mcp/.pytest_cache/
+
+widget/node_modules/
+widget/dist/
+###< components not implemented yet ###

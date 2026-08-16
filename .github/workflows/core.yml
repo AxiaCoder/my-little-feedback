@@ -1,0 +1,75 @@
+name: core
+
+# Path-filtered on purpose: a change to the widget must not rebuild PHP.
+# Each component owns its own workflow.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'core/**'
+      - 'contracts/**'
+      - '.github/workflows/core.yml'
+  pull_request:
+    paths:
+      - 'core/**'
+      - 'contracts/**'
+      - '.github/workflows/core.yml'
+
+defaults:
+  run:
+    working-directory: core
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: mlf_test
+          POSTGRES_USER: mlf
+          POSTGRES_PASSWORD: mlf
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U mlf"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgresql://mlf:mlf@localhost:5432/mlf_test?serverVersion=16&charset=utf8
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: intl, pdo_pgsql, zip, mbstring
+          coverage: none
+
+      - uses: ramsey/composer-install@v3
+        with:
+          working-directory: core
+
+      - name: Coding standards
+        run: vendor/bin/php-cs-fixer fix --dry-run --diff
+
+      - name: Static analysis
+        run: vendor/bin/phpstan analyse
+
+      - name: Tests
+        run: php bin/phpunit
+
+      # The check that replaces the compiler this polyglot repo does not have:
+      # if the API contract moved, the committed spec has to move with it.
+      - name: OpenAPI contract is up to date
+        run: |
+          php bin/console nelmio:apidoc:dump --format=yaml > /tmp/openapi.yaml
+          if ! diff -q /tmp/openapi.yaml ../contracts/openapi.yaml > /dev/null 2>&1; then
+            echo "::error::contracts/openapi.yaml is out of date — regenerate it and commit it in the same change."
+            diff -u ../contracts/openapi.yaml /tmp/openapi.yaml || true
+            exit 1
+          fi

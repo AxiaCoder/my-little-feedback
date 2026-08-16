@@ -1,0 +1,11 @@
+# Normalise line endings in the repository to LF. The CI runs on Linux and
+# containers read these files directly; CRLF in a shell script or a Dockerfile
+# breaks them in ways that are tedious to diagnose.
+* text=auto eol=lf
+
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
