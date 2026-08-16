@@ -19,12 +19,21 @@ services:
     build:
       context: ./core
     environment:
+      # Only the connection string is overridden here: core/.env points at the
+      # host-published port, which is wrong from inside the network.
+      #
+      # APP_ENV is deliberately NOT set. core/.env already declares `dev`, and a
+      # real environment variable outranks PHPUnit's `force="true"` — setting it
+      # here silently runs the whole test suite against the dev environment.
       DATABASE_URL: postgresql://mlf:mlf@postgres:5432/mlf?serverVersion=16&charset=utf8
-      APP_ENV: dev
     ports:
       - "8130:8000"
     volumes:
       - ./core:/app
+      # `composer openapi` writes to ../contracts, which is outside the core
+      # context. Without this mount the command works on the CI runner and fails
+      # in the container — the one place it is actually documented to be run.
+      - ./contracts:/contracts
       - /app/vendor
     depends_on:
       postgres:

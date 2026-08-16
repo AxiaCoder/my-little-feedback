@@ -1,0 +1,7 @@
+openapi: 3.0.0
+info:
+  title: 'My Little Feedback'
+  description: "Self-hosted feedback, contact messages and public roadmap.\n\nThis specification is generated from the controllers and committed to\n`contracts/openapi.yaml`. CI regenerates it and fails on any difference —\nin a repository with four languages, that check is what replaces the\ncompiler.\n"
+  version: 0.1.0
+paths: {  }
+

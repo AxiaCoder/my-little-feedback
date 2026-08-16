@@ -15,4 +15,6 @@ RUN composer dump-autoload --optimize
 
 EXPOSE 8000
 
-CMD ["php", "-S", "0.0.0.0:8000", "-t", "public"]
+# router.php is required, not decorative: without it the built-in server 404s on
+# any URI containing a dot before reaching Symfony. See the file's header.
+CMD ["php", "-S", "0.0.0.0:8000", "-t", "public", "router.php"]

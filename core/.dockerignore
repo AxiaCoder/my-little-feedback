@@ -1,0 +1,20 @@
+# The image installs its own dependencies from composer.lock, then `COPY . .`
+# copies the source on top. Without this file that copy also drags in whatever
+# vendor/ happens to exist on the developer's machine, overwriting the one the
+# image just installed.
+#
+# The failure it produces is genuinely misleading: a package is visibly present
+# in vendor/, `composer show` lists it, and PHP still reports its classes as not
+# found — because the autoloader was regenerated from someone else's install.
+vendor/
+
+# Build artefacts and caches. Copying them in makes the image non-reproducible
+# and can carry a cached container compiled against different code.
+var/
+.phpunit.cache/
+.php-cs-fixer.cache
+public/bundles/
+
+# Local secrets and overrides never belong in an image.
+.env.local
+.env.*.local

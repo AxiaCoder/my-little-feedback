@@ -1,0 +1,24 @@
+nelmio_api_doc:
+    documentation:
+        info:
+            title: My Little Feedback
+            description: |
+                Self-hosted feedback, contact messages and public roadmap.
+
+                This specification is generated from the controllers and committed to
+                `contracts/openapi.yaml`. CI regenerates it and fails on any difference —
+                in a repository with four languages, that check is what replaces the
+                compiler.
+            version: 0.1.0
+
+    html_config:
+        # Serve Swagger UI's assets from the bundle instead of a CDN. This is
+        # self-hosted software, and the documentation page should not stop working
+        # because a third-party host is unreachable — offline development included.
+        assets_mode: bundle
+
+    areas:
+        default:
+            path_patterns:
+                # Everything under /api, except the documentation routes themselves.
+                - '^/api(?!/doc)'

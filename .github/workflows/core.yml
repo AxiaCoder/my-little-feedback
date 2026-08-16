@@ -27,7 +27,10 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_DB: mlf_test
+          # `mlf`, not `mlf_test`: config/packages/doctrine.yaml appends a `_test`
+          # suffix in the test environment, so naming the database `mlf_test` here
+          # makes the suite look for `mlf_test_test`.
+          POSTGRES_DB: mlf
           POSTGRES_USER: mlf
           POSTGRES_PASSWORD: mlf
         ports:
@@ -39,7 +42,7 @@ jobs:
           --health-retries 10
 
     env:
-      DATABASE_URL: postgresql://mlf:mlf@localhost:5432/mlf_test?serverVersion=16&charset=utf8
+      DATABASE_URL: postgresql://mlf:mlf@localhost:5432/mlf?serverVersion=16&charset=utf8
 
     steps:
       - uses: actions/checkout@v4
