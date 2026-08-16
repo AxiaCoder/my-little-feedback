@@ -68,7 +68,10 @@
             "@auto-scripts"
         ],
         "test": "phpunit",
-        "stan": "phpstan analyse",
+        "stan": [
+            "@php bin/console cache:warmup --env=test",
+            "phpstan analyse"
+        ],
         "cs": "php-cs-fixer fix --dry-run --diff",
         "cs:fix": "php-cs-fixer fix",
         "openapi": "php bin/console nelmio:apidoc:dump --format=yaml > ../contracts/openapi.yaml"
