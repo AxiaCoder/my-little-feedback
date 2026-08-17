@@ -136,6 +136,12 @@ docker compose exec core composer cs:fix    # PHP-CS-Fixer (apply)
 docker compose exec core composer openapi   # regenerate contracts/openapi.yaml
 ```
 
+**`composer test` drops and recreates `mlf_test` before every run**, then builds its schema with
+the **migrations** — never `doctrine:schema:create`, which would skip the feedback types the
+migration seeds (spec 01 §2.7). There is nothing to create by hand, and the development database
+is never touched: `tests/bootstrap.php` passes `--env=test` explicitly to each command, because
+PHPUnit sets `APP_ENV` in `$_SERVER` and a child process does not inherit that.
+
 **Do not set `APP_ENV` in `docker-compose.yml`.** `core/.env` already declares it, and a
 real environment variable outranks PHPUnit's `force="true"` — the symptom is a test suite
 that silently runs against the dev environment and fails on the first environment assertion.
