@@ -63,7 +63,7 @@ $console = static function (string ...$command): void {
 $console('doctrine:database:drop', '--force', '--if-exists');
 $console('doctrine:database:create');
 
-// `--allow-no-migration` is here because migrations/ is still empty. Drop the
-// flag once the first migration lands: an empty migrations directory should then
-// be an error, not a suite that passes against an empty schema.
-$console('doctrine:migrations:migrate', '--allow-no-migration');
+// No `--allow-no-migration`: the first migration has landed, so an empty
+// migrations directory is now the error it should be, rather than a suite
+// passing against an empty schema.
+$console('doctrine:migrations:migrate');
