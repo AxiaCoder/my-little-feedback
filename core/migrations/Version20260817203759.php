@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace DoctrineMigrations;
 
+use Doctrine\DBAL\ParameterType;
 use Doctrine\DBAL\Schema\Schema;
 use Doctrine\Migrations\AbstractMigration;
 
@@ -45,24 +46,45 @@ final class Version20260817203759 extends AbstractMigration
 
         // Reference data, in the same file that creates its table.
         //
-        // The identifiers are literals rather than generated: PostgreSQL 16 has
-        // no UUID v7 function, and a migration that produced different keys on
-        // every installation would make this row impossible to reference from a
-        // later migration. They are genuine v7 values, generated once.
+        // Everything above is DDL and everything here is DML, and both go through
+        // addSql() on purpose. The executor queues *all* addSql() statements
+        // before any DDL derived from mutating the $schema argument
+        // (DbalExecutor::executeMigration), so building the tables through the
+        // schema builder while inserting through addSql() would run this INSERT
+        // against tables that do not exist yet.
         //
-        // ON CONFLICT keeps the statement idempotent, so re-running it against a
-        // database that already carries these slugs is a no-op rather than a
+        // The identifiers are fixed rather than generated: PostgreSQL 16 has no
+        // UUID v7 function, and keys that differed per installation could not be
+        // referenced from a later migration. They are genuine v7 values,
+        // generated once.
+        //
+        // ON CONFLICT keeps each statement idempotent, so re-running this against
+        // a database that already carries these slugs is a no-op rather than a
         // failure.
         //
         // There is deliberately no `other`: a catch-all value attracts everything
         // and stops the field from meaning anything (spec 01 §2.4).
-        $this->addSql(<<<'SQL'
-            INSERT INTO feedback_type (id, slug, label, position, is_active) VALUES
-                ('01a01171-fd73-7dd5-9838-f317987db226', 'bug', 'Bug', 0, true),
-                ('01a01171-fd7c-7be9-b0c4-443c8717c549', 'idea', 'Idea', 1, true),
-                ('01a01171-fd7c-7c59-b0c4-443c87ee6f5b', 'question', 'Question', 2, true)
-            ON CONFLICT (slug) DO NOTHING
-            SQL);
+        $defaultTypes = [
+            ['01a01171-fd73-7dd5-9838-f317987db226', 'bug', 'Bug', 0],
+            ['01a01171-fd7c-7be9-b0c4-443c8717c549', 'idea', 'Idea', 1],
+            ['01a01171-fd7c-7c59-b0c4-443c87ee6f5b', 'question', 'Question', 2],
+        ];
+
+        foreach ($defaultTypes as [$id, $slug, $label, $position]) {
+            // Bound parameters rather than values interpolated into the string.
+            // Nothing here comes from outside this file, so there is no injection
+            // to prevent; the point is that this is the form to reach for on the
+            // day a migration has to transform data it did not choose.
+            //
+            // `is_active` stays a literal: it is the state every default type
+            // starts in, not a value that varies per row.
+            $this->addSql(
+                'INSERT INTO feedback_type (id, slug, label, position, is_active)'
+                .' VALUES (?, ?, ?, ?, true) ON CONFLICT (slug) DO NOTHING',
+                [$id, $slug, $label, $position],
+                [ParameterType::STRING, ParameterType::STRING, ParameterType::STRING, ParameterType::INTEGER],
+            );
+        }
     }
 
     public function down(Schema $schema): void
