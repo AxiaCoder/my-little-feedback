@@ -1,6 +1,6 @@
 # My Little Feedback — Claude Context
 
-> Last updated: 2026-08-16
+> Last updated: 2026-08-17
 
 ---
 
@@ -62,7 +62,7 @@ Full reasoning, including the alternatives that were rejected: `docs/architectur
 ## Dev conventions
 
 - All content in English (see Ground rules).
-- **Nothing is committed on `main`.** Branch, open a pull request, let CI run, merge. A `pre-commit` hook refuses commits on `main`, and the pull request template asks for what the diff cannot say.
+- **Nothing is committed on `main`.** Branch, open a pull request, let CI run, merge. A GitHub ruleset enforces this server-side, with no bypass actor — that is deliberate, so do not route around it. The `pre-commit` hook catches the same mistake earlier, before a push costs a round trip. The pull request template asks for what the diff cannot say.
 - **Conventional Commits, enforced.** `<type>(<optional scope>): <subject>`, subject in the imperative and under 72 characters, no trailing period, blank line before the body. Types: `build` `chore` `ci` `docs` `feat` `fix` `perf` `refactor` `revert` `style` `test`. A `commit-msg` hook checks every commit and a workflow checks every pull request title.
 - **The hooks live in `.githooks/` and git does not install them on clone.** A SessionStart hook points `core.hooksPath` at them automatically; outside a Claude session, run `git config core.hooksPath .githooks` once. Until that is set the directory is inert and nothing stops a commit on `main`.
 - No personal data, no private hostnames, no ticket keys, no real e-mail addresses anywhere in the repository — it is public.
@@ -75,70 +75,19 @@ Full reasoning, including the alternatives that were rejected: `docs/architectur
 
 **1 — Core.** Done when a feedback item can be created through the API, attached to a product, and read in the back-office.
 
-Specified in `docs/specs/01-core-data-model.md` — entities, both endpoints, error shapes
-and seed strategy. Read it before writing any of the code below.
+Specified in `docs/specs/01-core-data-model.md` — entities, both endpoints, error shapes and
+seed strategy. It is **accepted, not a draft**. Read it before writing any of the code it covers.
 
-Remaining:
-- [ ] Data model: `Product`, `FeedbackType`, `Feedback` (+ status, submitter context)
-- [ ] Doctrine migration, seeding the default feedback types
-- [ ] `POST /api/feedback` and `GET /api/feedback` with validation
-- [ ] Back-office listing page (Twig)
-- [x] OpenAPI generation working — `contracts/openapi.yaml` is generated and committed;
-      the CI job that diffs it has still never executed
-- [x] Working `docker compose up`
+**The work itself lives in the issue tracker**, under the `1 - Core` milestone, one issue per
+pull request and in the order the spec's §8 fixes. It is deliberately not repeated here: a list
+that exists in two places is a list that drifts, and only one of the two can be assigned, closed
+and referenced from a pull request.
+
+```bash
+gh issue list --milestone '1 - Core'
+```
 
 Not in this milestone: widget, MCP, Go service, public roadmap, authentication.
-
----
-
-## Where we stopped — 2026-08-16, end of session
-
-> ⚠️ **This section is temporary and does not belong in this file.** `CLAUDE.md` states how to
-> work on the project; it is not a logbook, and on a public repository a running commentary on
-> where a session stopped is noise for every reader who is not us.
->
-> **First action of the next session: turn everything below into GitHub issues**, then delete
-> this section. Tracked work belongs in the issue tracker, where it can be assigned, closed and
-> referenced from a pull request — none of which a Markdown bullet can do.
-
-**The baseline is real now.** Everything below was executed, not read: the stack was torn
-down with `docker compose down -v` and rebuilt from scratch, and the CI ran twice on GitHub.
-
-| | |
-|---|---|
-| Repository | `github.com/AxiaCoder/my-little-feedback`, public, remote `origin` over SSH |
-| `main` | green — `e5095b4`, PR #1 merged |
-| Verified locally | stack up, migrations, PHPUnit, PHPStan, PHP-CS-Fixer, `composer openapi`, `/api/doc` and `/api/doc.json` |
-| Verified on CI | all four steps, **including the OpenAPI contract check**, on both the `push` and `pull_request` triggers |
-
-**Still true, still nothing written:** no entity, no controller, no migration, no template.
-The application does nothing yet — what exists is a scaffold that has been proven to run.
-
-### Next session, in this order
-
-0. **Open a GitHub issue per item below, then delete this whole section.** The list stops living
-   in the repository the moment it can live in the tracker.
-1. **Test database plumbing.** `mlf_test` does not exist and nothing creates it. The single
-   test only boots the kernel, so this is invisible today and blocking at the first
-   functional test. Spec §2.7 requires the suite to run the **migrations** rather than
-   `doctrine:schema:create`, so that the seeded feedback types exist and the migrations get
-   exercised on every run. Roughly thirty lines, no unknowns.
-2. **Entities** — `Product`, `FeedbackType`, `Feedback`, the `SubmitterContext` embeddable,
-   the `FeedbackStatus` enum, repositories.
-3. **The migration**, seeding the three default feedback types in the same file that creates
-   their table.
-4. `POST /api/feedback`, then `GET /api/feedback` — one pull request each.
-5. Twig back-office listing, then regenerate and commit `contracts/openapi.yaml`.
-
-Steps 2 and 3 travel together in one pull request. Read
-`docs/specs/01-core-data-model.md` before starting any of them — it is accepted, not a draft.
-
-### Open, decided against for now
-
-**Branch protection on `main` is not enabled.** The local hook catches the honest mistake but
-is bypassed by `--no-verify` and absent from a fresh clone. Only a GitHub ruleset actually
-prevents a direct push. Worth enabling; not done because it changes repository settings and
-that call is the owner's.
 
 ---
 
@@ -146,7 +95,6 @@ that call is the owner's.
 
 - **Two authentication populations** — administrators and end users who vote on the roadmap. The model is not designed yet. It becomes blocking at milestone 5, not before.
 - **The public roadmap is the heaviest part of the scope**, heavier than the MCP server: public identity, open sign-up, moderation, anti-spam. Not estimated.
-- **The CI workflow has never executed** — there is no remote yet. Treat `.github/workflows/core.yml` as untested code. The commands it runs have all been verified by hand inside the container, but the runner path (no container, `../contracts` relative to `core/`) has not.
 - **`nelmio/api-doc-bundle` is wired by hand** — `bundles.php`, `config/packages/nelmio_api_doc.yaml` and `config/routes/nelmio_api_doc.yaml` are written, not generated. Its recipe lives in `recipes-contrib`, which `composer.json` disables with `allow-contrib: false`. Do not expect `composer recipes:install` to fix anything there. It also needs `symfony/asset`: without it the bundle silently drops the Swagger UI controller and the route 500s on a controller that "does not exist".
 - **`core/router.php` is not optional.** PHP's built-in server 404s on any URI whose last segment contains a dot, before Symfony ever sees it — `/api/doc.json` included. The router script is what routes those to the front controller.
 - On the author's Windows machine, `php.ini` and Composer live inside PHP's WinGet package directory. A package update can wipe them; if PHP suddenly reports missing extensions, that is why.
