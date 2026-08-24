@@ -372,9 +372,11 @@ No authentication in this milestone, so the route is as open as the API. Same ca
 - **No rate limiting, no spam filtering, no origin allow-list.** That is `ingest`'s job and it
   does not exist yet.
 - **No status-transition rules.** Any status can move to any other.
-- **No product CRUD, and no feedback-type CRUD.** Products come from a fixture, types from the
-  migration (§2.7). Changing either means SQL until the back-office grows the screens — which is
-  a gap in the configurability argument for §2.4, not a contradiction of it.
+- **No product CRUD, and no feedback-type CRUD.** Both come from the fixtures (§2.7), so changing
+  either means SQL until the back-office grows the screens. For types that is no longer only a
+  gap in the configurability argument for §2.4: since nothing seeds them, the screen is the only
+  way an installation gets a type at all, and `POST /api/feedback` refuses every submission until
+  one exists.
 - **No endpoint exposing the list of types.** The widget will need one; it is specified with the
   widget, at milestone 2, because its shape depends on whether types end up per-product.
 - **`GET /api/feedback` exposes submitter e-mail addresses** with no auth in front of it. Fine on
