@@ -67,7 +67,11 @@ Full reasoning, including the alternatives that were rejected: `docs/architectur
 - **The hooks live in `.githooks/` and git does not install them on clone.** A SessionStart hook points `core.hooksPath` at them automatically; outside a Claude session, run `git config core.hooksPath .githooks` once. Until that is set the directory is inert and nothing stops a commit on `main`.
 - No personal data, no private hostnames, no ticket keys, no real e-mail addresses anywhere in the repository — it is public.
 - The public product identifier (`data-product="..."`) **is not a secret**. Never treat it as authentication; protection is server-side only.
-- Doctrine migrations are committed, never edited after being applied.
+- Doctrine migrations are committed, and **never edited once they have run anywhere but a
+  developer's own machine**. Nothing is deployed yet, so until the first deployment a migration
+  may still be corrected in place and replayed against a rebuilt database — that is how the
+  feedback-type seed was removed. After that first deployment, a mistake leaves through a new
+  migration and never by editing the old one.
 
 ---
 
@@ -76,7 +80,8 @@ Full reasoning, including the alternatives that were rejected: `docs/architectur
 **1 — Core.** Done when a feedback item can be created through the API, attached to a product, and read in the back-office.
 
 Specified in `docs/specs/01-core-data-model.md` — entities, both endpoints, error shapes and
-seed strategy. It is **accepted, not a draft**. Read it before writing any of the code it covers.
+seed strategy. It is **accepted, not a draft**, and §2.7 was revised once the seed moved out of
+the migrations. Read it before writing any of the code it covers.
 
 **The work itself lives in the issue tracker**, under the `1 - Core` milestone, one issue per
 pull request and in the order the spec's §8 fixes. It is deliberately not repeated here: a list
@@ -133,14 +138,19 @@ docker compose exec core composer test      # PHPUnit
 docker compose exec core composer stan      # PHPStan (warms the test container first)
 docker compose exec core composer cs        # PHP-CS-Fixer (dry run)
 docker compose exec core composer cs:fix    # PHP-CS-Fixer (apply)
+docker compose exec core composer fixtures  # load the dev products and sample feedback
 docker compose exec core composer openapi   # regenerate contracts/openapi.yaml
 ```
 
 **`composer test` drops and recreates `mlf_test` before every run**, then builds its schema with
-the **migrations** — never `doctrine:schema:create`, which would skip the feedback types the
-migration seeds (spec 01 §2.7). There is nothing to create by hand, and the development database
-is never touched: `tests/bootstrap.php` passes `--env=test` explicitly to each command, because
+the **migrations** — never `doctrine:schema:create`, so that the migrations are exercised on
+every run. The schema arrives **empty**: nothing is seeded there, and a test that needs a product
+or a feedback type creates it (spec 01 §2.7). The development database is never touched: `tests/bootstrap.php` passes `--env=test` explicitly to each command, because
 PHPUnit sets `APP_ENV` in `$_SERVER` and a child process does not inherit that.
+
+**`composer fixtures` purges every table before loading**, so it is development tooling and
+nothing else. It is also the **only** source of feedback types: an installation starts with none
+and creates its own through the back-office, which is why nothing seeds them (spec 01 §2.7).
 
 **Do not set `APP_ENV` in `docker-compose.yml`.** `core/.env` already declares it, and a
 real environment variable outranks PHPUnit's `force="true"` — the symptom is a test suite

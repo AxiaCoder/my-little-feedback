@@ -24,11 +24,10 @@ if ($_SERVER['APP_DEBUG']) {
  * the kernel and never opened a connection.
  *
  * The schema is built by running the **migrations**, never
- * `doctrine:schema:create`. Spec 01 §2.7: building it from entity metadata would
- * skip the feedback types the migration seeds, so every functional test on
- * POST /api/feedback would fail on a type that does not exist. It also means the
- * migrations are exercised on every run — a check this project would otherwise
- * never have.
+ * `doctrine:schema:create`, so that the migrations are exercised on every run —
+ * a check this project would otherwise never have. Nothing is seeded there any
+ * more (spec 01 §2.7): a test that needs a product or a feedback type creates
+ * it, and the schema arrives empty.
  *
  * Dropping rather than reusing costs a second and buys determinism: a run can
  * never inherit a row, a sequence or a half-applied migration from the run
