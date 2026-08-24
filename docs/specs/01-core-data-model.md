@@ -179,9 +179,12 @@ reference them, and a fixture load that had to be taught to exclude one table fr
 a workaround whose existence was the symptom. A migration describes a schema. Rows that an
 operator is expected to edit, rename or delete are not schema.
 
-The rows already seeded in production do not exist, because there is no production. They are
-removed by a follow-up migration rather than by editing the one that inserted them, which has
-been applied and is therefore frozen.
+The seed was taken out of the schema migration in place, rather than undone by a second one.
+Editing an applied migration is normally forbidden, and the reason is that environments then
+diverge in silence — but there is no production, and the only long-lived database is the
+author's, rebuilt in three commands. A single migration that only ever describes a schema is
+worth more than a pair recording a decision that was reversed within a week. That licence ends
+at the first deployment.
 
 **Consequence for the test suite: tests still build their schema by running the migrations**, but
 no longer because anything is seeded there. Running them is what exercises them, and a suite that

@@ -67,7 +67,11 @@ Full reasoning, including the alternatives that were rejected: `docs/architectur
 - **The hooks live in `.githooks/` and git does not install them on clone.** A SessionStart hook points `core.hooksPath` at them automatically; outside a Claude session, run `git config core.hooksPath .githooks` once. Until that is set the directory is inert and nothing stops a commit on `main`.
 - No personal data, no private hostnames, no ticket keys, no real e-mail addresses anywhere in the repository — it is public.
 - The public product identifier (`data-product="..."`) **is not a secret**. Never treat it as authentication; protection is server-side only.
-- Doctrine migrations are committed, never edited after being applied.
+- Doctrine migrations are committed, and **never edited once they have run anywhere but a
+  developer's own machine**. Nothing is deployed yet, so until the first deployment a migration
+  may still be corrected in place and replayed against a rebuilt database — that is how the
+  feedback-type seed was removed. After that first deployment, a mistake leaves through a new
+  migration and never by editing the old one.
 
 ---
 
