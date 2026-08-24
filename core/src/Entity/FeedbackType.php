@@ -13,14 +13,9 @@ use Symfony\Component\Uid\Uuid;
 /**
  * What the submitter is telling us: a bug, an idea, a question.
  *
- * A table rather than a PHP enum, deliberately (spec 01 §2.4). This is
- * self-hosted software: whoever installs it should be able to decide they want
- * `translation` and `accessibility` instead of the three defaults, without
- * patching PHP and without writing a migration of their own.
- *
- * The test that separates this from {@see FeedbackStatus} is whether code
- * branches on the value. Nothing here treats a `bug` differently from an `idea`:
- * it is a label, an icon and a filter facet.
+ * A table rather than a PHP enum, so that an installation can choose its own
+ * set without patching PHP — spec 01 §2.4, and the contrast with
+ * {@see FeedbackStatus}.
  */
 #[ORM\Entity(repositoryClass: FeedbackTypeRepository::class)]
 #[ORM\Table(name: 'feedback_type')]
@@ -44,13 +39,10 @@ class FeedbackType
     private int $position;
 
     /**
-     * Deletion is `ON DELETE RESTRICT` from {@see Feedback}, so a type that has
-     * ever been used can never be removed. This column is the way out: an
-     * inactive type disappears from the widget and from the creation endpoint,
-     * while the feedback already filed under it stays readable.
-     *
-     * Without it, configurability would be half-built — you could add a type you
-     * wanted but never retire one you regretted.
+     * A type that has ever been used can never be deleted, since {@see Feedback}
+     * references it with `RESTRICT`. Deactivating is the way to retire one: it
+     * disappears from the widget and from the creation endpoint, while the
+     * feedback already filed under it stays readable.
      */
     #[ORM\Column(options: ['default' => true])]
     private bool $isActive;

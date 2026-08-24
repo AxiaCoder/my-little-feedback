@@ -12,12 +12,8 @@ use Symfony\Bridge\Doctrine\Types\UuidType;
 use Symfony\Component\Uid\Uuid;
 
 /**
- * A product feedback is filed against — My Little Library, My Little Trivia, and
- * whatever comes next. One instance serves several of them (spec 01 §2.2).
- *
- * There is no creation endpoint in milestone 1: products come from a fixture in
- * development and from SQL in an installation, until the back-office grows the
- * screens for them.
+ * A product feedback is filed against. One instance serves several of them
+ * (spec 01 §2.2).
  */
 #[ORM\Entity(repositoryClass: ProductRepository::class)]
 #[ORM\Table(name: 'product')]
@@ -29,11 +25,9 @@ class Product
     private Uuid $id;
 
     /**
-     * The public `data-product="…"` value.
-     *
-     * An identifier, never a credential: anyone who can read the widget's script
-     * tag can read this and post to the endpoint. Every protection is
-     * server-side, which is what justifies `ingest` existing at all.
+     * The public `data-product="…"` value: an identifier, never a credential.
+     * Anyone who can read the widget's script tag can read this and post to the
+     * endpoint, so every protection is server-side.
      */
     #[ORM\Column(length: 60)]
     private string $slug;

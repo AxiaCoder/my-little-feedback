@@ -10,10 +10,9 @@ use Doctrine\ORM\Mapping as ORM;
  * Who filed a feedback item and from where — all of it optional, because
  * anonymous feedback is the default case (spec 01 §2.6).
  *
- * An embeddable rather than five plain fields on {@see Feedback}: this cluster
- * travels together, is entirely optional, and will be reused the day contact
- * messages get their own entity. It costs nothing in the schema — an embeddable
- * is a mapping concept, not a join, and these columns live in the same table.
+ * An embeddable rather than five plain fields on {@see Feedback}: the cluster
+ * travels together and will be reused the day contact messages get their own
+ * entity.
  */
 #[ORM\Embeddable]
 class SubmitterContext
@@ -34,11 +33,8 @@ class SubmitterContext
 
     /**
      * Read from the request headers by the controller and **never** trusted from
-     * the request body: a user agent is a header, so the body has no business
-     * carrying one (spec 01 §3.2).
-     *
-     * Stored for spam triage, not for display — it is absent from the API
-     * representation (§5).
+     * the request body (spec 01 §3.2). Stored for spam triage, not for display:
+     * it is absent from the API representation.
      */
     #[ORM\Column(length: 512, nullable: true)]
     private ?string $userAgent;

@@ -16,11 +16,10 @@ use Symfony\Component\Uid\Uuid;
  */
 #[ORM\Entity(repositoryClass: FeedbackRepository::class)]
 #[ORM\Table(name: 'feedback')]
-// Serves the back-office listing, which is filtered by product and ordered by
-// date. A btree scans backwards at the same cost, so the index carries no
-// direction of its own.
+// No direction on `created_at`: a btree scans backwards at the same cost, and
+// carrying `DESC` would put the schema out of sync with Doctrine's comparator.
 #[ORM\Index(name: 'idx_feedback_product_created_at', columns: ['product_id', 'created_at'])]
-// For the roadmap queries that arrive at milestone 5.
+// Nothing queries by status yet; the roadmap will.
 #[ORM\Index(name: 'idx_feedback_status', columns: ['status'])]
 class Feedback
 {
@@ -28,11 +27,7 @@ class Feedback
     #[ORM\Column(type: UuidType::NAME, unique: true)]
     private Uuid $id;
 
-    /**
-     * `RESTRICT`, not a cascade: deleting a product that still holds feedback
-     * should fail loudly rather than silently destroy the history. Product
-     * deletion is not implemented yet, so the safe direction costs nothing.
-     */
+    /** `RESTRICT`, not a cascade: deleting a product that still holds feedback must fail loudly rather than destroy the history. */
     #[ORM\ManyToOne(targetEntity: Product::class)]
     #[ORM\JoinColumn(name: 'product_id', nullable: false, onDelete: 'RESTRICT')]
     private Product $product;
@@ -45,9 +40,9 @@ class Feedback
     private FeedbackStatus $status;
 
     /**
-     * Nullable on purpose. The widget's job is to make reporting cheap, and a
-     * mandatory subject line is the field people abandon a form on. The
-     * back-office falls back to the first line of the message when it is absent.
+     * Nullable on purpose: a mandatory subject line is the field people abandon
+     * a form on (spec 01 §2.3). The back-office falls back to the first line of
+     * the message when it is absent.
      */
     #[ORM\Column(length: 160, nullable: true)]
     private ?string $title;
@@ -104,8 +99,8 @@ class Feedback
     }
 
     /**
-     * No transition is refused in this milestone. Constraining them is a
-     * milestone-5 concern, once the roadmap gives them a meaning (spec 01 §2.5).
+     * No transition is refused: constraining them needs the roadmap to give them
+     * a meaning first (spec 01 §2.5).
      */
     public function setStatus(FeedbackStatus $status): void
     {
