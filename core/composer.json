@@ -74,7 +74,7 @@
         ],
         "cs": "php-cs-fixer fix --dry-run --diff",
         "cs:fix": "php-cs-fixer fix",
-        "fixtures": "php bin/console doctrine:fixtures:load --purge-exclusions=feedback_type",
+        "fixtures": "php bin/console doctrine:fixtures:load",
         "openapi": "php bin/console nelmio:apidoc:dump --format=yaml > ../contracts/openapi.yaml"
     },
     "conflict": {

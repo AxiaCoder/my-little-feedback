@@ -1,7 +1,8 @@
 # Spec 01 — Core data model and feedback API
 
-> Milestone 1. Status: **accepted.** Revised once after review — feedback types moved from a PHP
-> enum to a reference table (§2.4), which is why §2.7 exists.
+> Milestone 1. Status: **accepted.** Revised twice after review — feedback types moved from a PHP
+> enum to a reference table (§2.4), which is why §2.7 exists; then the default types moved out of
+> the migration and into the fixtures, which reversed most of §2.7.
 > Scope: `Product`, `FeedbackType`, `Feedback`, `POST /api/feedback`, `GET /api/feedback`,
 > back-office listing.
 > Out of scope: authentication, voting, the public roadmap, the widget, `ingest`, `mcp`.
@@ -158,37 +159,37 @@ messages get their own entity.
 `userAgent` is read from the request headers by the controller and **never trusted from the
 request body** — see §3.2.
 
-### 2.7 Seed data and fixtures — two different jobs
+### 2.7 Fixtures, and why an installation starts empty
 
-These get confused, and confusing them is how a production database gets purged.
+**All seed data lives in `AppFixtures`** — the products, the feedback types, and the sample
+feedback. Development and test only, never part of an installation.
 
-**Reference data — the default feedback types.** Inserted by the Doctrine migration that creates
-the `feedback_type` table, as a plain idempotent `INSERT`. `doctrine:migrations:migrate` is
-already the documented installation step, so someone installing the project gets a working
-application with no extra command to forget. `doctrine/doctrine-fixtures-bundle` is the wrong
-tool for this: `doctrine:fixtures:load` **purges the database by default**, which makes it dev
-tooling, not an installer.
+**An installation therefore starts with no feedback types, and that is the intent.** The whole
+reason `feedback_type` is a table rather than an enum (§2.4) is that each installation picks its
+own set. Shipping three defaults contradicts that: it decides for the operator, and it does so in
+the one place they cannot easily change without writing SQL. The back-office CRUD for types is
+what creates them in production. Until that screen exists there is no installation to serve —
+nothing is deployed — so the empty window costs nothing.
 
-The rejected alternative was a dedicated `app:install` console command. It makes the mechanism
-more visible, which this project usually values — but it is a step that gets skipped, and the
-failure mode is an application whose widget offers zero types.
+**This reverses the first version of this section, which seeded the types from the migration.**
+The argument then was that `doctrine:migrations:migrate` is the documented installation step, so
+an installation would get a working application with no extra command to forget. What it bought
+instead was a migration carrying DML, three UUID literals hard-coded so a later migration could
+reference them, and a fixture load that had to be taught to exclude one table from its purge —
+a workaround whose existence was the symptom. A migration describes a schema. Rows that an
+operator is expected to edit, rename or delete are not schema.
 
-**Development data — products and sample feedback.** That is what
-`doctrine/doctrine-fixtures-bundle` is for, and it is already a `require-dev` dependency: there
-is no product creation endpoint, so without a fixture there is nothing to attach a feedback item
-to. Dev and test only, never part of an installation.
+The rows already seeded in production do not exist, because there is no production. They are
+removed by a follow-up migration rather than by editing the one that inserted them, which has
+been applied and is therefore frozen.
 
-The two kinds of data meet in one place, and it is a sharp edge: `doctrine:fixtures:load` purges
-every table, `feedback_type` included, and re-running the migration will not restore those rows
-because it is already recorded as executed. The fixtures are therefore loaded through
-`composer fixtures`, which excludes that table from the purge, and `AppFixtures` fails loudly
-rather than silently if a default type is missing.
+**Consequence for the test suite: tests still build their schema by running the migrations**, but
+no longer because anything is seeded there. Running them is what exercises them, and a suite that
+drops and rebuilds cannot inherit a row or a half-applied migration from the run before it. What
+changes is that **a test that needs a product or a type now creates it**, rather than assuming
+the schema arrived pre-populated.
 
-**Consequence for the test suite: tests run the migrations, not `doctrine:schema:create`.**
-Building the schema from entity metadata skips the seeded types, and every functional test on
-`POST /api/feedback` would fail on a type that does not exist. Running migrations instead means
-the migrations themselves are exercised on every CI run — a check this project would otherwise
-never have.
+There is deliberately no `other` type among the fixture defaults, for the reason given in §2.4.
 
 ---
 
@@ -384,9 +385,10 @@ No authentication in this milestone, so the route is as open as the API. Same ca
    `bundles.php`, no configuration, no route. Nothing can generate `contracts/openapi.yaml` until
    this is fixed, so the CI contract check cannot pass. It goes first.
 2. Entities, embeddable, the `status` enum, repositories.
-3. Doctrine migration — schema plus the seeded default types — applied against the Compose
-   database. Switch the test bootstrap to run migrations instead of `doctrine:schema:create`, and
-   add `doctrine/doctrine-fixtures-bundle` with a product fixture (§2.7).
+3. Doctrine migration for the schema, applied against the Compose database. Switch the test
+   bootstrap to run migrations instead of `doctrine:schema:create`, and add
+   `doctrine/doctrine-fixtures-bundle` with a fixture creating the products, the feedback types
+   and some sample feedback (§2.7).
 4. `POST /api/feedback` — DTO, validation, error envelope, functional tests.
 5. `GET /api/feedback` — filters, pagination, functional tests.
 6. Twig plus the back-office listing.

@@ -12,8 +12,8 @@ use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
  *
  * Both assertions read as tautologies until the day they fail. The first one
  * failing means the suite is writing into the development database; the second
- * means the schema stopped coming from the migrations, and with it the feedback
- * types they seed (spec 01 §2.7).
+ * means the schema stopped coming from the migrations, and with it the only
+ * check this project has that they still run.
  */
 final class TestDatabaseTest extends KernelTestCase
 {

@@ -76,7 +76,8 @@ Full reasoning, including the alternatives that were rejected: `docs/architectur
 **1 — Core.** Done when a feedback item can be created through the API, attached to a product, and read in the back-office.
 
 Specified in `docs/specs/01-core-data-model.md` — entities, both endpoints, error shapes and
-seed strategy. It is **accepted, not a draft**. Read it before writing any of the code it covers.
+seed strategy. It is **accepted, not a draft**, and §2.7 was revised once the seed moved out of
+the migrations. Read it before writing any of the code it covers.
 
 **The work itself lives in the issue tracker**, under the `1 - Core` milestone, one issue per
 pull request and in the order the spec's §8 fixes. It is deliberately not repeated here: a list
@@ -138,14 +139,14 @@ docker compose exec core composer openapi   # regenerate contracts/openapi.yaml
 ```
 
 **`composer test` drops and recreates `mlf_test` before every run**, then builds its schema with
-the **migrations** — never `doctrine:schema:create`, which would skip the feedback types the
-migration seeds (spec 01 §2.7). There is nothing to create by hand, and the development database
-is never touched: `tests/bootstrap.php` passes `--env=test` explicitly to each command, because
+the **migrations** — never `doctrine:schema:create`, so that the migrations are exercised on
+every run. The schema arrives **empty**: nothing is seeded there, and a test that needs a product
+or a feedback type creates it (spec 01 §2.7). The development database is never touched: `tests/bootstrap.php` passes `--env=test` explicitly to each command, because
 PHPUnit sets `APP_ENV` in `$_SERVER` and a child process does not inherit that.
 
 **`composer fixtures` purges every table before loading**, so it is development tooling and
-nothing else. The script exists so that `feedback_type` stays out of that purge: those rows are
-seeded by the migration, and a migration already recorded as executed will not re-insert them.
+nothing else. It is also the **only** source of feedback types: an installation starts with none
+and creates its own through the back-office, which is why nothing seeds them (spec 01 §2.7).
 
 **Do not set `APP_ENV` in `docker-compose.yml`.** `core/.env` already declares it, and a
 real environment variable outranks PHPUnit's `force="true"` — the symptom is a test suite

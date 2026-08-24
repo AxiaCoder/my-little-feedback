@@ -16,24 +16,41 @@ use RuntimeException;
 /**
  * Development and test data only — never part of an installation.
  *
- * The default feedback types are deliberately absent: they are reference data,
- * seeded by the migration that creates their table (spec 01 §2.7). This fixture
- * looks them up, and fails loudly if they are gone — see {@see self::type()}.
+ * That includes the feedback types. An installation starts with none and its
+ * operator creates their own through the back-office, which is the point of
+ * `feedback_type` being a table rather than an enum (spec 01 §2.4 and §2.7).
+ * The three below are the set this project happens to want, not a default the
+ * software imposes.
  */
 final class AppFixtures extends Fixture
 {
+    /**
+     * There is deliberately no `other`: a catch-all attracts everything and
+     * stops the field from meaning anything (spec 01 §2.4).
+     *
+     * @var list<array{string, string, int}> slug, label, position
+     */
+    private const TYPES = [
+        ['bug', 'Bug', 0],
+        ['idea', 'Idea', 1],
+        ['question', 'Question', 2],
+    ];
+
     /** @var list<array{string, string}> slug, name */
     private const PRODUCTS = [
         ['my-little-library', 'My Little Library'],
         ['my-little-trivia', 'My Little Trivia'],
     ];
 
-    /** @var array<string, FeedbackType> */
-    private array $types = [];
-
     public function load(ObjectManager $manager): void
     {
+        $types = [];
         $products = [];
+
+        foreach (self::TYPES as [$slug, $label, $position]) {
+            $types[$slug] = new FeedbackType($slug, $label, $position);
+            $manager->persist($types[$slug]);
+        }
 
         foreach (self::PRODUCTS as [$slug, $name]) {
             $products[$slug] = new Product($slug, $name);
@@ -43,7 +60,7 @@ final class AppFixtures extends Fixture
         foreach ($this->samples() as [$productSlug, $typeSlug, $title, $message, $status, $submitter]) {
             $feedback = new Feedback(
                 $this->product($products, $productSlug),
-                $this->type($manager, $typeSlug),
+                $this->type($types, $typeSlug),
                 $message,
                 $title,
                 $submitter,
@@ -137,29 +154,14 @@ final class AppFixtures extends Fixture
     }
 
     /**
-     * Reference data is not this fixture's to create, only to reference — so a
-     * missing type means the database is in a state no installation produces.
-     *
-     * The likely cause is a purge: `doctrine:fixtures:load` empties every table
-     * by default, `feedback_type` included, and re-running the migrations will
-     * not put the rows back because the migration is already recorded as
-     * executed. `composer fixtures` exists to keep that table out of the purge.
+     * @param array<string, FeedbackType> $types
      */
-    private function type(ObjectManager $manager, string $slug): FeedbackType
+    private function type(array $types, string $slug): FeedbackType
     {
-        $type = $this->types[$slug] ?? $manager->getRepository(FeedbackType::class)->findOneBy(['slug' => $slug]);
-
-        if (null === $type) {
-            $message = sprintf(
-                'The default feedback type "%s" is missing from the database. It is seeded by the migration, '
-                .'not by this fixture. Load fixtures with `composer fixtures`, which excludes feedback_type '
-                .'from the purge; if the rows are already gone, re-create the database and migrate again.',
-                $slug,
-            );
-
-            throw new RuntimeException($message);
+        if (!isset($types[$slug])) {
+            throw new RuntimeException(sprintf('Unknown feedback type slug "%s" in the sample feedback.', $slug));
         }
 
-        return $this->types[$slug] = $type;
+        return $types[$slug];
     }
 }

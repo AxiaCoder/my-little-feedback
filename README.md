@@ -107,7 +107,9 @@ The API is then on http://localhost:8130, and the generated OpenAPI documentatio
 docker compose exec core composer fixtures
 ```
 
-That loads two sample products and a handful of feedback items, because there is no product creation endpoint yet and an empty `product` table leaves nothing to attach feedback to. It **purges every table first**, which is why it is a Composer script rather than a bare command: the script keeps `feedback_type` out of the purge. Those rows are reference data seeded by the migration, and once purged the migration will not put them back — it is already recorded as executed.
+That loads the feedback types, two sample products and a handful of feedback items. It **purges every table first**, so it belongs nowhere near an installation.
+
+A fresh installation has no feedback types at all, and that is deliberate: the `feedback_type` table exists so each installation chooses its own set, which the back-office is what creates. Nothing is seeded by the migrations — see [spec 01 §2.7](docs/specs/01-core-data-model.md).
 
 No `.env.local` is needed for this: Compose passes `DATABASE_URL` as a real environment variable, and Symfony gives those precedence over any `.env*` file. Create one only to override something for yourself — it is git-ignored.
 
