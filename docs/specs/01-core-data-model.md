@@ -174,9 +174,15 @@ more visible, which this project usually values — but it is a step that gets s
 failure mode is an application whose widget offers zero types.
 
 **Development data — products and sample feedback.** That is what
-`doctrine/doctrine-fixtures-bundle` is for, and it becomes a dependency in this milestone: there
+`doctrine/doctrine-fixtures-bundle` is for, and it is already a `require-dev` dependency: there
 is no product creation endpoint, so without a fixture there is nothing to attach a feedback item
 to. Dev and test only, never part of an installation.
+
+The two kinds of data meet in one place, and it is a sharp edge: `doctrine:fixtures:load` purges
+every table, `feedback_type` included, and re-running the migration will not restore those rows
+because it is already recorded as executed. The fixtures are therefore loaded through
+`composer fixtures`, which excludes that table from the purge, and `AppFixtures` fails loudly
+rather than silently if a default type is missing.
 
 **Consequence for the test suite: tests run the migrations, not `doctrine:schema:create`.**
 Building the schema from entity metadata skips the seeded types, and every functional test on

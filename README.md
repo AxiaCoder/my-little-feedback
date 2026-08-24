@@ -101,6 +101,14 @@ docker compose exec core php bin/console doctrine:migrations:migrate
 
 The API is then on http://localhost:8130, and the generated OpenAPI documentation on http://localhost:8130/api/doc.
 
+**Development data — never run this against an installation:**
+
+```bash
+docker compose exec core composer fixtures
+```
+
+That loads two sample products and a handful of feedback items, because there is no product creation endpoint yet and an empty `product` table leaves nothing to attach feedback to. It **purges every table first**, which is why it is a Composer script rather than a bare command: the script keeps `feedback_type` out of the purge. Those rows are reference data seeded by the migration, and once purged the migration will not put them back — it is already recorded as executed.
+
 No `.env.local` is needed for this: Compose passes `DATABASE_URL` as a real environment variable, and Symfony gives those precedence over any `.env*` file. Create one only to override something for yourself — it is git-ignored.
 
 **Running `core` outside a container** is also supported: Postgres is published on `localhost:5440`, which is what `core/.env` already points at, so `php -S localhost:8130 -t core/public` works against the Compose database with no extra configuration.
