@@ -1,6 +1,6 @@
 # My Little Feedback — Claude Context
 
-> Last updated: 2026-08-17
+> Last updated: 2026-09-07
 
 ---
 
@@ -19,6 +19,18 @@
 **Everything in this repository is written in English** — code, comments, documentation, commit messages, branch names, pull requests. No exception. The repository is public from the first commit, so there is no translation pass to plan for later.
 
 **This project is a learning vehicle, not a delivery race.** That inverts the usual criterion: a choice that ships faster but teaches nothing is a bad choice here. Do not propose a library or a framework whose selling point is that it saves time — propose the one that makes the mechanism visible. This is why API Platform was rejected in favour of hand-written controllers, and why the widget is a Web Component rather than a React package.
+
+**The author writes the code. Claude does not.** This repository is where the author writes PHP again after a period spent only reviewing generated code. That is the point of the project, and it outranks every argument about speed.
+
+In this repository:
+
+- **Never write, edit or propose the code of an open issue** — no diff, no patch, no "roughly this".
+- **Answer in words**: the mechanism, the Symfony component that owns it, the trade-off, where the documentation covers it. Naming the file to touch is help; writing its contents is not.
+- **A teaching snippet is allowed when it is explicitly asked for**, the way documentation shows an API: it illustrates how something is used, on an object the open issue does not touch — never `Feedback`, `Product`, or the code under way. If showing it would hand over the issue's solution, say so instead of showing it.
+- **Review is the main contribution.** Pull requests are where correctness, Symfony idiom, the conventions below and the gaps in the tests get caught.
+- Everything that is not production code stays as before: specifications, issues, documentation, CI, tooling, this file.
+
+Reversing this takes an explicit request, in the session that needs it. The default never flips on its own.
 
 **Build order is enforced and not negotiable:** core → widget → mcp → ingest → public roadmap. A language the author is learning never sits on the critical path.
 
