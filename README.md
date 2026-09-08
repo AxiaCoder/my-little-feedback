@@ -96,10 +96,14 @@ Only PHP and Composer matter today: `ingest`, `mcp` and `widget` are not impleme
 
 ```bash
 docker compose up -d
-docker compose exec core php bin/console doctrine:migrations:migrate
+./console doctrine:migrations:migrate
 ```
 
 The API is then on http://localhost:8130, and the generated OpenAPI documentation on http://localhost:8130/api/doc.
+
+`./console` is a one-line wrapper around `docker compose exec core php bin/console`, since the
+host is not expected to have PHP. It forwards its arguments untouched — `./console cache:clear
+--env=test` reaches Symfony with its option intact — and works from any directory in the tree.
 
 **Development data — never run this against an installation:**
 
