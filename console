@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+#
+# Shortcut for the Symfony console, which lives inside the `core` container:
+# the host is not expected to have PHP. Every argument is forwarded verbatim,
+# so options reach Symfony rather than being swallowed on the way.
+#
+#   ./console debug:router
+#   ./console cache:clear --env=test
+#
+# Compose resolves docker-compose.yml relative to the working directory, so the
+# script moves to its own directory first and works from anywhere in the tree.
+set -eu
+
+cd "$(dirname "$0")"
+exec docker compose exec core php bin/console "$@"
